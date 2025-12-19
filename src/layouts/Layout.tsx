@@ -25,13 +25,18 @@ export default function Layout() {
           variant="temporary"
           open={leftOpen}
           onClose={() => setLeftOpen(false)}
-          sx={{
-            "& .MuiDrawer-paper": {
-              width: drawerWidth,
+          ModalProps={{ keepMounted: true }}
+          slotProps={{
+            paper: {
+              sx: {
+                width: drawerWidth,
+                mt: "64px",
+                height: "calc(100% - 64px)",
+              },
             },
           }}
         >
-          <LeftDrawer />
+          <LeftDrawer onClose={() => setLeftOpen(false)} />
         </Drawer>
 
         <Box flexGrow={1} p={2} overflow="auto" bgcolor="#f5f5f5">
@@ -43,13 +48,18 @@ export default function Layout() {
           anchor="right"
           open={rightOpen}
           onClose={() => setRightOpen(false)}
-          sx={{
-            "& .MuiDrawer-paper": {
-              width: drawerWidth,
+          ModalProps={{ keepMounted: true }}
+          slotProps={{
+            paper: {
+              sx: {
+                width: drawerWidth,
+                mt: "64px",
+                height: "calc(100% - 64px)",
+              },
             },
           }}
         >
-          <RightDrawer />
+          <RightDrawer onClose={() => setLeftOpen(false)} />
         </Drawer>
       </Box>
     </Box>
