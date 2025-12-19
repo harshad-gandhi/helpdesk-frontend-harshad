@@ -1,73 +1,107 @@
-# React + TypeScript + Vite
+# HelpDesk Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, scalable **HelpDesk Frontend Application** built using **React** and **Material UI**, focused on clean architecture, real-world UI patterns, and production-ready frontend practices.
 
-Currently, two official plugins are available:
+This project is designed for **learning, collaboration, and frontend architecture experimentation**, while closely mirroring how enterprise applications are structured.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## 🚀 Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React (with TypeScript)
+- Material UI (MUI)
+- React Router
+- SCSS / CSS Modules
+- REST API Integration
+- Modern Component-Based Architecture
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## ✨ Features
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Authentication & Login UI
+- Role-based routing and route protection
+- Reusable layout system (Header, Drawers, Content)
+- Modular component and feature-based structure
+- API-driven data flow
+- Responsive and accessible UI
+- Clean separation of concerns
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 📁 Project Structure
+
+```
+src/
+├── assets/            # Images, icons, static assets
+├── components/        # Reusable UI components
+├── layouts/           # Application layouts (Header, Drawers, etc.)
+├── pages/             # Page-level components (Login, Dashboard, etc.)
+├── routes/            # Route configuration and guards
+├── services/          # API and service layer
+├── styles/            # Global styles and themes
+├── utils/             # Utility helpers
+├── App.tsx
+└── main.tsx
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+This structure follows scalable, enterprise-level frontend patterns commonly used in large teams.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🔐 Authentication & Authorization
+
+- Client-side authentication flow
+- Protected routes using React Router
+- Token handling managed at UI level
+- Backend authentication and authorization handled externally
+
+⚠️ No secrets, credentials, or sensitive data are stored in this repository.
+
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+- Node.js (LTS recommended)
+- npm or yarn
+
+### Installation
+
+```bash
+git clone https://github.com/your-username/helpdesk-frontend.git
+cd helpdesk-frontend
+npm install
 ```
+
+### Run the Project
+
+```bash
+npm run dev
+```
+
+The application will be available at:
+http://localhost:5173
+
+---
+
+## 📌 Disclaimer
+
+This project is intended for:
+- Learning
+- Frontend architecture practice
+- Team collaboration
+- Demonstrating real-world React patterns
+
+It is not a production-ready system and should not be used as-is in live environments without proper backend and security review.
+
+---
+
+## ⭐ Acknowledgements
+
+Built with a focus on:
+- Clean UI
+- Maintainable code
+- Real-world frontend practices
+
+If you find this project useful, consider giving it a ⭐.
