@@ -11,15 +11,15 @@ export default function App() {
   return (
     <>
       <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route element={<Layout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/agents" element={<Agents />} />
             <Route path="/contacts" element={<Contacts />} />
-            <Route path="/login" element={<Login />} />
-          </Routes>
-        </Layout>
+          </Route>
+        </Routes>
       </BrowserRouter>
     </>
   );

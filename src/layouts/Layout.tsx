@@ -3,10 +3,11 @@ import { useState } from "react";
 import Header from "../components/Header";
 import LeftDrawer from "../components/LeftDrawer";
 import RightDrawer from "../components/RightDrawer";
+import { Outlet } from "react-router-dom";
 
 const drawerWidth = 240;
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function Layout() {
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
 
@@ -34,7 +35,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </Drawer>
 
         <Box flexGrow={1} p={2} overflow="auto" bgcolor="#f5f5f5">
-          {children}
+          <Outlet />
         </Box>
 
         <Drawer
