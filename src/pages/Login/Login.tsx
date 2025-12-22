@@ -41,10 +41,6 @@ export default function Login() {
         turnstileToken: "",
       });
 
-      console.log("data");
-      console.log(data
-        
-      );
 
       setAuthSession(data.accessToken);
       navigate("/dashboard");
@@ -84,6 +80,8 @@ export default function Login() {
                 variant="filled"
                 margin="normal"
                 value={email}
+                required
+                placeholder="Enter your Email"
                 onChange={(e) => setEmail(e.target.value)}
               />
 
@@ -94,6 +92,8 @@ export default function Login() {
                 variant="filled"
                 margin="normal"
                 value={password}
+                required
+                placeholder="Enter your Email"
                 onChange={(e) => setPassword(e.target.value)}
               />
 
