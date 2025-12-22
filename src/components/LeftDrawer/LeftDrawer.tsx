@@ -12,7 +12,7 @@ import {
   Switch,
   IconButton,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import InboxIcon from "@mui/icons-material/Inbox";
@@ -37,18 +37,14 @@ const menuItems = [
   { label: "Agents", icon: <PeopleIcon />, path: "/agents" },
 ];
 
-interface LeftDrawerProps {
-  onClose: () => void;
-}
-
-export default function LeftDrawer({ onClose }: LeftDrawerProps) {
+export default function LeftDrawer() {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isActive, setIsActive] = useState(true);
+  const location = useLocation();
 
   const handleClick = (path: string) => {
     navigate(path);
-    onClose();
   };
 
   return (
@@ -60,14 +56,21 @@ export default function LeftDrawer({ onClose }: LeftDrawerProps) {
       }}
     >
       <List sx={{ flexGrow: 1 }}>
-        {menuItems.map((item, index) => (
-          <ListItem key={index} disablePadding>
-            <ListItemButton onClick={() => handleClick(item.path)}>
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} />
-            </ListItemButton>
-          </ListItem>
-        ))}
+        {menuItems.map((item, index) => {
+          const isSelected = location.pathname === item.path;
+
+          return (
+            <ListItem key={index} disablePadding>
+              <ListItemButton
+                selected={isSelected}
+                onClick={() => handleClick(item.path)}
+              >
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.label} />
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
       </List>
 
       <Divider />
@@ -103,7 +106,6 @@ export default function LeftDrawer({ onClose }: LeftDrawerProps) {
             onClick={() => {
               setAnchorEl(null);
               navigate("/profile");
-              onClose();
             }}
           >
             <ListItemIcon>

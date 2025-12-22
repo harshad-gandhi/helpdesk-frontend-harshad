@@ -12,6 +12,7 @@ import Reporting from "./pages/Reporting";
 import Departments from "./pages/Departments";
 import ProtectedRoute from "./guard/ProtectedRoute";
 import PageNotFound from "./pages/PageNotFound";
+import Profile from "./pages/Profile";
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
               <Route path="/reporting" element={<Reporting />} />
               <Route path="/department" element={<Departments />} />
               <Route path="/agents" element={<Agents />} />
+              <Route path="/profile" element={<Profile />} />
             </Route>
           </Route>
         </Routes>
