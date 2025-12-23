@@ -8,38 +8,44 @@ import { Outlet } from "react-router-dom";
 const drawerWidth = 240;
 
 export default function Layout() {
-  const [leftOpen, setLeftOpen] = useState(false);
+  const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(false);
 
   return (
     <Box display="flex" flexDirection="column" height="100vh">
       <Header
-        onLeftToggle={() => setLeftOpen(true)}
+        onLeftToggle={() => setLeftOpen((prev) => !prev)}
         onRightToggle={() => setRightOpen(true)}
       />
-
       <Toolbar />
 
       <Box display="flex" flexGrow={1} overflow="hidden">
         <Drawer
-          variant="temporary"
+          variant="persistent"
           open={leftOpen}
-          onClose={() => setLeftOpen(false)}
-          ModalProps={{ keepMounted: true }}
-          slotProps={{
-            paper: {
-              sx: {
-                width: drawerWidth,
-                mt: "64px",
-                height: "calc(100% - 64px)",
-              },
+          sx={{
+            flexShrink: 0,
+            "& .MuiDrawer-paper": {
+              width: drawerWidth,
+              mt: "66px",
+              height: "calc(100% - 66px)",
+              boxSizing: "border-box",
             },
           }}
         >
-          <LeftDrawer onClose={() => setLeftOpen(false)} />
+          <LeftDrawer />
         </Drawer>
 
-        <Box flexGrow={1} p={2} overflow="auto" bgcolor="#f5f5f5">
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: 2,
+            bgcolor: "#f5f5f5",
+            transition: (theme) => theme.transitions.create("margin", {}),
+            marginLeft: leftOpen ? `${drawerWidth}px` : 0,
+          }}
+        >
           <Outlet />
         </Box>
 
@@ -52,14 +58,14 @@ export default function Layout() {
           slotProps={{
             paper: {
               sx: {
-                width: drawerWidth,
-                mt: "64px",
-                height: "calc(100% - 64px)",
+                mt: "66px",
+                height: "calc(100% - 66px)",
               },
             },
           }}
         >
-          <RightDrawer onClose={() => setLeftOpen(false)} />
+          {/* <RightDrawer onClose={() => setRightOpen(false)} /> */}
+          <RightDrawer />
         </Drawer>
       </Box>
     </Box>

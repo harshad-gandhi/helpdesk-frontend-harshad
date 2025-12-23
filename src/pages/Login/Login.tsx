@@ -11,7 +11,7 @@ import {
 import "./Login.scss";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { login } from "../../services/auth.service";
+import { login } from "../../services/auth-service";
 import { setAuthSession } from "../../utils/storage";
 
 export default function Login() {
@@ -40,11 +40,6 @@ export default function Login() {
         rememberMe: false,
         turnstileToken: "",
       });
-
-      console.log("data");
-      console.log(data
-        
-      );
 
       setAuthSession(data.accessToken);
       navigate("/dashboard");
@@ -84,6 +79,8 @@ export default function Login() {
                 variant="filled"
                 margin="normal"
                 value={email}
+                required
+                placeholder="Enter your Email"
                 onChange={(e) => setEmail(e.target.value)}
               />
 
@@ -94,6 +91,8 @@ export default function Login() {
                 variant="filled"
                 margin="normal"
                 value={password}
+                required
+                placeholder="Enter your Email"
                 onChange={(e) => setPassword(e.target.value)}
               />
 
