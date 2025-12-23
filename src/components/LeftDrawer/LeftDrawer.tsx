@@ -130,7 +130,7 @@ export default function LeftDrawer() {
             onClick={() => {
               setAnchorEl(null);
               localStorage.clear();
-              navigate("/login");
+              navigate("/");
             }}
           >
             <ListItemIcon>

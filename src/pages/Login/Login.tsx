@@ -11,7 +11,7 @@ import {
 import "./Login.scss";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { login } from "../../services/auth.service";
+import { login } from "../../services/auth-service";
 import { setAuthSession } from "../../utils/storage";
 
 export default function Login() {
@@ -40,7 +40,6 @@ export default function Login() {
         rememberMe: false,
         turnstileToken: "",
       });
-
 
       setAuthSession(data.accessToken);
       navigate("/dashboard");
