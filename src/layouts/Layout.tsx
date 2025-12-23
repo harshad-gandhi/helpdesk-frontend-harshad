@@ -27,8 +27,8 @@ export default function Layout() {
             flexShrink: 0,
             "& .MuiDrawer-paper": {
               width: drawerWidth,
-              mt: "64px",
-              height: "calc(100% - 64px)",
+              mt: "66px",
+              height: "calc(100% - 66px)",
               boxSizing: "border-box",
             },
           }}
@@ -58,14 +58,14 @@ export default function Layout() {
           slotProps={{
             paper: {
               sx: {
-                width: drawerWidth,
-                mt: "64px",
-                height: "calc(100% - 64px)",
+                mt: "66px",
+                height: "calc(100% - 66px)",
               },
             },
           }}
         >
-          <RightDrawer onClose={() => setRightOpen(false)} />
+          {/* <RightDrawer onClose={() => setRightOpen(false)} /> */}
+          <RightDrawer />
         </Drawer>
       </Box>
     </Box>
