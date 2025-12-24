@@ -1,15 +1,23 @@
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type SyntheticEvent,
+} from "react";
 import {
   getAllAgents,
+  getAllDepartments,
   getAllPendingAgents,
 } from "../../services/agent-service";
 import "./Agents.scss";
 import type {
   Agent,
+  AgentActionsProps,
   AgentPendingInvitations,
   AgentsGet,
+  DepartmentsGet,
   Invitations_Agent,
-  TabPanelProps,
 } from "../../interfaces";
 import {
   Box,
@@ -21,27 +29,14 @@ import {
   OutlinedInput,
   Tab,
   Tabs,
+  Tooltip,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import type { Column } from "../../core/components/interfaces";
 import StickyHeadTable from "../../core/components/StickyHeadTable";
-
-function CustomTabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
+import EditIcon from "@mui/icons-material/Edit";
+import AddAgentDialog from "./AddAgentDialog";
 
 function a11yProps(index: number) {
   return {
@@ -52,26 +47,75 @@ function a11yProps(index: number) {
 
 export default function Agents() {
   const [agents, setAgents] = useState<AgentsGet[]>([]);
+  const [departments, setDepartments] = useState<DepartmentsGet[]>([]);
+  const [isAddAgentOpen, setIsAddAgentOpen] = useState(false);
+
   const [invitedAgents, setInvitedAgents] = useState<AgentPendingInvitations[]>(
     []
   );
 
   const [value, setValue] = useState(0);
 
-  const handleChange = async (
-    _event: React.SyntheticEvent,
-    newValue: number
-  ) => {
+  const handleChange = async (_event: SyntheticEvent, newValue: number) => {
     setValue(newValue);
   };
 
-  const columns: Column<Agent>[] = [
-    { id: "fullName", label: "Name", minWidth: 200 },
-    { id: "projects", label: "Project", minWidth: 150 },
-    { id: "phoneNumber", label: "Phone", minWidth: 150 },
-    { id: "reportsTo", label: "Report To", minWidth: 150 },
-    { id: "departmentName", label: "Department", minWidth: 150 },
-  ];
+  const handleEditAgent = useCallback((agent: Agent) => {
+    console.log("Edit agent", agent);
+  }, []);
+
+  const handleAddAgent = useCallback(async () => {
+    const data: DepartmentsGet[] = await getAllDepartments<DepartmentsGet[]>();
+    setDepartments(data);
+    setIsAddAgentOpen(true);
+  }, []);
+
+  const handleSubmitAddAgent = (data: {
+    email: string;
+    department: string;
+    reportsTo: string;
+  }) => {
+    console.log("Submitting agent:", data);
+    setIsAddAgentOpen(false);
+  };
+
+  const AgentActions = ({ agent, onEdit, onAdd }: AgentActionsProps) => (
+    <>
+      <Tooltip title="Edit Agent">
+        <IconButton size="small" color="primary" onClick={() => onEdit(agent)}>
+          <EditIcon />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="Add Agent">
+        <IconButton size="small" color="success" onClick={() => onAdd(agent)}>
+          <AddIcon />
+        </IconButton>
+      </Tooltip>
+    </>
+  );
+  const columns = useMemo<Column<Agent>[]>(
+    () => [
+      { id: "fullName", label: "Name", minWidth: 200 },
+      { id: "projects", label: "Project", minWidth: 150 },
+      { id: "phoneNumber", label: "Phone", minWidth: 150 },
+      { id: "reportsTo", label: "Report To", minWidth: 150 },
+      { id: "departmentName", label: "Department", minWidth: 150 },
+      {
+        id: "actions",
+        label: "Actions",
+        minWidth: 120,
+        align: "center",
+        render: (row) => (
+          <AgentActions
+            agent={row}
+            onEdit={handleEditAgent}
+            onAdd={handleAddAgent}
+          />
+        ),
+      },
+    ],
+    [handleEditAgent, handleAddAgent]
+  );
   const invitations_columns: Column<Invitations_Agent>[] = [
     { id: "invitedEmail", label: "Name", minWidth: 200 },
     { id: "reportsTo", label: "Report To", minWidth: 150 },
@@ -87,14 +131,13 @@ export default function Agents() {
     const loadAgents: () => Promise<void> = async () => {
       try {
         if (value == 0) {
-          const data = await getAllAgents<AgentsGet[]>(true);
-          setAgents(data);
+          setAgents(await getAllAgents<AgentsGet[]>(true));
         } else if (value == 1) {
-          const data = await getAllAgents<AgentsGet[]>(false);
-          setAgents(data);
+          setAgents(await getAllAgents<AgentsGet[]>(false));
         } else {
-          const data = await getAllPendingAgents<AgentPendingInvitations[]>();
-          setInvitedAgents(data);
+          setInvitedAgents(
+            await getAllPendingAgents<AgentPendingInvitations[]>()
+          );
         }
       } catch (error) {
         console.error(error);
@@ -112,15 +155,21 @@ export default function Agents() {
             <p className="page-subtitle m-0">Manage agents for all projects</p>
           </div>
           <div className="header-actions d-flex align-items-center gap-3">
-            <Button variant="contained" startIcon={<AddIcon />}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => {
+                handleAddAgent();
+              }}
+            >
               Add Agent
             </Button>
           </div>
         </div>
         <div className="search-tabs-section d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 gap-md-4 mb-4">
-          <FormControl sx={{ m: 1, width: "25ch" }} variant="outlined">
+          <FormControl sx={{ m: 1, width: "50ch" }} variant="outlined">
             <InputLabel htmlFor="outlined-adornment-password">
-              Password
+              Search
             </InputLabel>
             <OutlinedInput
               id="outlined-adornment-password"
@@ -144,10 +193,7 @@ export default function Agents() {
               <Tab label="Pending" {...a11yProps(2)} />
             </Tabs>
           </Box>
-          <CustomTabPanel value={value} index={0}></CustomTabPanel>
-          <CustomTabPanel value={value} index={1}></CustomTabPanel>
-          <CustomTabPanel value={value} index={2}></CustomTabPanel>
-        </div>{" "}
+        </div>
         <div className="table-container">
           {value === 0 || value === 1 ? (
             <StickyHeadTable columns={columns} rows={rows} />
@@ -159,6 +205,24 @@ export default function Agents() {
           )}
         </div>
       </div>
+      <div className="add customer">
+        <AddAgentDialog
+          open={isAddAgentOpen}
+          departments={departments}
+          onClose={() => setIsAddAgentOpen(false)}
+          onSubmit={handleSubmitAddAgent}
+        />
+      </div>
+      {/* <div className="edit customer">
+        <EditAgentDialog
+          open={isAddAgentOpen}
+          agent={selectedAgent}
+          departments={departments}
+          agents={agents}
+          onClose={() => setIsAddAgentOpen(false)}
+          onSubmit={handleSubmitAddAgent}
+        />
+      </div> */}
     </>
   );
 }

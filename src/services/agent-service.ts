@@ -1,3 +1,4 @@
+import type { InviteAgentRequest } from "../interfaces";
 import type { ApiResponse } from "../interfaces/api-response";
 import { getToken } from "./auth-service";
 
@@ -35,4 +36,46 @@ export async function getAllPendingAgents<T>() {
   });
 
   return handleResponse<T>(response);
+}
+export async function getAllDepartments<T>() {
+  const token = getToken();
+
+  const response = await fetch(`${BASE_URL}/agents/departments`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return handleResponse<T>(response);
+}
+export async function getAllReportsTos<T>(
+  roleId: number,
+  departmentId: number
+) {
+  const token = getToken();
+
+  const url = new URL(`${BASE_URL}/agents/reports-to`);
+  url.searchParams.append("roleId", roleId.toString());
+  url.searchParams.append("departmentId", departmentId.toString());
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return handleResponse<T>(response);
+}
+
+export async function inviteAgent(payload: InviteAgentRequest) {
+  const token = getToken();
+  const response = await fetch(`${BASE_URL}/agents/invite`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(response);
 }
