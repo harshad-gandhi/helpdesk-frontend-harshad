@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   useCallback,
   useEffect,
@@ -6,6 +7,7 @@ import {
   type SyntheticEvent,
 } from "react";
 import {
+  deleteAgent,
   getAllAgents,
   getAllDepartments,
   getAllPendingAgents,
@@ -32,11 +34,14 @@ import {
   Tooltip,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
 import type { Column } from "../../core/components/interfaces";
 import StickyHeadTable from "../../core/components/StickyHeadTable";
 import EditIcon from "@mui/icons-material/Edit";
 import AddAgentDialog from "./AddAgentDialog";
+import EditAgentDialog from "./EditAgentDialog";
+import { getToken } from "../../services/auth-service";
 
 function a11yProps(index: number) {
   return {
@@ -50,6 +55,13 @@ export default function Agents() {
   const [departments, setDepartments] = useState<DepartmentsGet[]>([]);
   const [isAddAgentOpen, setIsAddAgentOpen] = useState(false);
 
+  const [isEditAgentOpen, setIsEditAgentOpen] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+
+  const [roles, setRoles] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [reportsTo, setReportsTo] = useState<any[]>([]);
+
   const [invitedAgents, setInvitedAgents] = useState<AgentPendingInvitations[]>(
     []
   );
@@ -60,8 +72,69 @@ export default function Agents() {
     setValue(newValue);
   };
 
-  const handleEditAgent = useCallback((agent: Agent) => {
-    console.log("Edit agent", agent);
+  const [searchText, setSearchText] = useState("");
+
+  const handleDeleteAgent = useCallback(async (agent: Agent) => {
+    console.log(agent);
+
+    await deleteAgent(agent.userId);
+  }, []);
+
+  const handleEditAgent = useCallback(async (agent: Agent) => {
+    try {
+      // Fetch agent details
+      console.log(agent);
+      const token = getToken();
+
+      const agentDetails = await fetch(`http://localhost:5093/api/agents/5`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }).then((res) => res.json());
+
+      // Parallel API calls
+      const [rolesRes, projectsRes, departmentsRes, reportsToRes] =
+        await Promise.all([
+          fetch("http://localhost:5093/api/agents/roles", {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }).then((r) => r.json()),
+          fetch("http://localhost:5093/api/projects", {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }).then((r) => r.json()),
+          fetch("http://localhost:5093/api/agents/departments", {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }).then((r) => r.json()),
+          fetch(
+            "http://localhost:5093/api/agents/reports-to?roleId=3&agentUserId=5&departmentId=10",
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          ).then((r) => r.json()),
+        ]);
+
+      setSelectedAgent(agentDetails.data);
+      setRoles(rolesRes.data);
+      setProjects(projectsRes.data);
+      setDepartments(departmentsRes.data);
+      setReportsTo(reportsToRes.data);
+
+      setIsEditAgentOpen(true);
+    } catch (error) {
+      console.error("Failed to load edit agent data", error);
+    }
   }, []);
 
   const handleAddAgent = useCallback(async () => {
@@ -70,25 +143,30 @@ export default function Agents() {
     setIsAddAgentOpen(true);
   }, []);
 
-  const handleSubmitAddAgent = (data: {
+  const handleSubmitAddAgent = async (data: {
     email: string;
     department: string;
     reportsTo: string;
   }) => {
     console.log("Submitting agent:", data);
     setIsAddAgentOpen(false);
+    setAgents(await getAllAgents<AgentsGet[]>(true));
   };
 
-  const AgentActions = ({ agent, onEdit, onAdd }: AgentActionsProps) => (
+  const AgentActions = ({ agent, onEdit, onDelete }: AgentActionsProps) => (
     <>
       <Tooltip title="Edit Agent">
         <IconButton size="small" color="primary" onClick={() => onEdit(agent)}>
           <EditIcon />
         </IconButton>
       </Tooltip>
-      <Tooltip title="Add Agent">
-        <IconButton size="small" color="success" onClick={() => onAdd(agent)}>
-          <AddIcon />
+      <Tooltip title="Delete Agent">
+        <IconButton
+          size="small"
+          color="success"
+          onClick={() => onDelete(agent)}
+        >
+          <DeleteIcon />
         </IconButton>
       </Tooltip>
     </>
@@ -109,12 +187,12 @@ export default function Agents() {
           <AgentActions
             agent={row}
             onEdit={handleEditAgent}
-            onAdd={handleAddAgent}
+            onDelete={handleDeleteAgent}
           />
         ),
       },
     ],
-    [handleEditAgent, handleAddAgent]
+    [handleEditAgent, handleDeleteAgent]
   );
   const invitations_columns: Column<Invitations_Agent>[] = [
     { id: "invitedEmail", label: "Name", minWidth: 200 },
@@ -145,6 +223,21 @@ export default function Agents() {
     };
     loadAgents();
   }, [value]);
+
+  const filteredRows = useMemo(() => {
+    if (!searchText.trim()) return rows;
+
+    const search = searchText.toLowerCase();
+
+    return rows.filter((agent: any) => {
+      return (
+        agent.fullName?.toLowerCase().includes(search) ||
+        agent.departmentName?.toLowerCase().includes(search) ||
+        agent.reportsTo?.toLowerCase().includes(search) ||
+        agent.projects?.toLowerCase().includes(search)
+      );
+    });
+  }, [rows, searchText]);
   return (
     <>
       <div className="agents-container h-100 p-2 p-lg-3">
@@ -172,13 +265,16 @@ export default function Agents() {
               Search
             </InputLabel>
             <OutlinedInput
-              id="outlined-adornment-password"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
               endAdornment={
                 <InputAdornment position="end">
-                  <IconButton edge="end">{<SearchIcon />}</IconButton>
+                  <IconButton edge="end">
+                    <SearchIcon />
+                  </IconButton>
                 </InputAdornment>
               }
-              label="Password"
+              label="Search"
             />
           </FormControl>
 
@@ -196,7 +292,7 @@ export default function Agents() {
         </div>
         <div className="table-container">
           {value === 0 || value === 1 ? (
-            <StickyHeadTable columns={columns} rows={rows} />
+            <StickyHeadTable columns={columns} rows={filteredRows} />
           ) : (
             <StickyHeadTable
               columns={invitations_columns}
@@ -206,23 +302,28 @@ export default function Agents() {
         </div>
       </div>
       <div className="add customer">
-        <AddAgentDialog
-          open={isAddAgentOpen}
-          departments={departments}
-          onClose={() => setIsAddAgentOpen(false)}
-          onSubmit={handleSubmitAddAgent}
-        />
+        {isAddAgentOpen && (
+          <AddAgentDialog
+            open={isAddAgentOpen}
+            departments={departments}
+            onClose={() => setIsAddAgentOpen(false)}
+            onSubmit={handleSubmitAddAgent}
+          />
+        )}
       </div>
-      {/* <div className="edit customer">
-        <EditAgentDialog
-          open={isAddAgentOpen}
-          agent={selectedAgent}
-          departments={departments}
-          agents={agents}
-          onClose={() => setIsAddAgentOpen(false)}
-          onSubmit={handleSubmitAddAgent}
-        />
-      </div> */}
+      <EditAgentDialog
+        open={isEditAgentOpen}
+        agent={selectedAgent}
+        roles={roles}
+        projects={projects}
+        departments={departments}
+        reportsTo={reportsTo}
+        onClose={() => setIsEditAgentOpen(false)}
+        onSubmit={(data: any) => {
+          console.log("Updated Agent:", data);
+          setIsEditAgentOpen(false);
+        }}
+      />
     </>
   );
 }

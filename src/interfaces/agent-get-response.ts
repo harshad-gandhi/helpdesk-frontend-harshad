@@ -1,5 +1,5 @@
 export interface AgentsGet {
-  userId: string;
+  userId: number;
   fullName: string;
   projects: string;
   email: string;

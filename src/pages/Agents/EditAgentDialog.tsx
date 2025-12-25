@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Dialog,
   DialogTitle,
@@ -6,100 +7,231 @@ import {
   Button,
   TextField,
   MenuItem,
+  Grid,
+  Checkbox,
   FormControl,
   InputLabel,
+  ListItemText,
   Select,
+  OutlinedInput,
 } from "@mui/material";
-import { useState, useEffect } from "react";
-import type { AddAgentDialogProps, ReportsToDropdown } from "../../interfaces";
-import { getAllReportsTos } from "../../services/agent-service";
+import { useEffect, useState } from "react";
+import { updateAgent } from "../../services/agent-service";
+import type UpdateAgentRequest from "../../interfaces/update-agent-request";
 
 export default function EditAgentDialog({
   open,
+  agent,
+  roles,
+  projects,
   departments,
+  reportsTo,
   onClose,
-  onSubmit,
-}: AddAgentDialogProps) {
-  const [email, setEmail] = useState("");
-  const [department, setDepartment] = useState("");
-  const [reportsTo, setReportsTo] = useState("");
-  const [reportPersons, setReportPersons] = useState<ReportsToDropdown[]>([]);
+}: any) {
+  const [form, setForm] = useState<any>({});
 
-  const handleSubmit = () => {
-    onSubmit({ email, department, reportsTo });
+  const handleSubmit = async () => {
+    try {
+      const firstAgent = agent[0];
+
+      const agentProjects = (form.projectIds || []).map(
+        (projectId: number) => ({
+          id: projectId,
+          chatAgent: true,
+        })
+      );
+
+      const payload: UpdateAgentRequest = {
+        agentUserId: firstAgent.userId,
+        name: firstAgent.fullName,
+        email: firstAgent.email,
+        role: form.roleId,
+        status: form.status === "Active",
+        chatLimit: form.chatLimit,
+        department: form.departmentId,
+        reportsToPerson: form.reportsToId,
+        agentProjects,
+        adminProjects: [],
+      };
+
+      console.log(payload);
+      await updateAgent(payload);
+      onClose();
+    } catch (error) {
+      console.error("Failed to invite agent", error);
+    }
   };
 
-  // Call API when department changes
   useEffect(() => {
-    const fetchReports = async () => {
-      if (!department) return;
+    if (agent) {
+      const firstAgent = agent[0];
 
-      try {
-        // Replace 3 with the actual roleId you need
-        const data = await getAllReportsTos<ReportsToDropdown[]>(
-          3,
-          Number(department)
-        );
-        setReportPersons(data);
-      } catch (error) {
-        console.error("Failed to fetch reports to:", error);
-      }
-    };
+      const projectIds = agent.map((a: any) => a.projectId);
 
-    fetchReports();
-  }, [department]);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setForm({
+        name: firstAgent.fullName ?? "Na",
+        email: firstAgent.email,
+        chatLimit: firstAgent.chatLimit,
+        roleId: firstAgent.roleId,
+        status: firstAgent.isActive ? "Active" : "InActive",
+        departmentId: firstAgent.departmentId,
+        reportsToId: firstAgent.reportsToId,
+        projectIds: projectIds,
+      });
+    }
+  }, [agent]);
+
+  const handleChange = (e: any) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Add Agent</DialogTitle>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Edit User</DialogTitle>
 
-      <DialogContent
-        sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-        className="p-3"
-      >
-        {/* Email */}
-        <TextField
-          label="Agent Email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          fullWidth
-          required
-        />
+      <DialogContent>
+        <Grid container spacing={2} mt={1}>
+          <Grid size={12}>
+            <TextField
+              label="Name"
+              name="name"
+              fullWidth
+              disabled
+              value={form.name || ""}
+              onChange={handleChange}
+              required
+            />
+          </Grid>
 
-        {/* Department Select */}
-        <FormControl fullWidth required>
-          <InputLabel id="department-label">Department</InputLabel>
-          <Select
-            labelId="department-label"
-            value={department}
-            label="Department"
-            onChange={(e) => setDepartment(e.target.value)}
-          >
-            {departments.map((dept) => (
-              <MenuItem key={dept.id} value={dept.id}>
-                {dept.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+          <Grid size={12}>
+            <TextField
+              label="Email"
+              name="email"
+              fullWidth
+              disabled
+              value={form.email || ""}
+              required
+            />
+          </Grid>
 
-        {/* Reports To Select */}
-        <FormControl fullWidth>
-          <InputLabel id="reports-to-label">Reports To</InputLabel>
-          <Select
-            labelId="reports-to-label"
-            value={reportsTo}
-            label="Reports To"
-            onChange={(e) => setReportsTo(e.target.value)}
-          >
-            {reportPersons.map((a) => (
-              <MenuItem key={a.name} value={a.id}>
-                {a.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+          <Grid size={12}>
+            <TextField
+              label="Chat Limit"
+              name="chatLimit"
+              type="number"
+              fullWidth
+              value={form.chatLimit || ""}
+              onChange={handleChange}
+              required
+            />
+          </Grid>
+
+          <Grid size={12}>
+            <FormControl fullWidth>
+              <InputLabel id="project-multiple-checkbox-label">
+                Projects
+              </InputLabel>
+
+              <Select
+                labelId="project-multiple-checkbox-label"
+                multiple
+                name="projectIds"
+                value={form.projectIds ?? []}
+                onChange={handleChange}
+                input={<OutlinedInput label="Projects" />}
+                renderValue={(selected: any[]) =>
+                  projects
+                    .filter((p: any) => selected.includes(p.projectId))
+                    .map((p: any) => p.name)
+                    .join(", ")
+                }
+              >
+                {projects.map((p: any) => (
+                  <MenuItem key={p.projectId} value={p.projectId}>
+                    <Checkbox
+                      checked={form.projectIds?.includes(p.projectId)}
+                    />
+                    <ListItemText primary={p.name} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid size={6}>
+            <FormControl fullWidth required>
+              <InputLabel id="role-label">Role</InputLabel>
+              <Select
+                labelId="role-label"
+                name="roleId"
+                value={form.roleId ?? ""}
+                onChange={handleChange}
+                input={<OutlinedInput label="Role" />}
+              >
+                {roles.map((r: any) => (
+                  <MenuItem key={r.id} value={r.id}>
+                    {r.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid size={6}>
+            <FormControl fullWidth required>
+              <InputLabel id="status-label">Status</InputLabel>
+              <Select
+                labelId="status-label"
+                name="status"
+                value={form.status}
+                onChange={handleChange}
+                input={<OutlinedInput label="Status" />}
+              >
+                <MenuItem value="Active">Active</MenuItem>
+                <MenuItem value="InActive">Inactive</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid size={6}>
+            <FormControl fullWidth required>
+              <InputLabel id="department-label">Department</InputLabel>
+              <Select
+                labelId="department-label"
+                name="departmentId"
+                value={form.departmentId ?? ""}
+                onChange={handleChange}
+                input={<OutlinedInput label="Department" />}
+              >
+                {departments.map((d: any) => (
+                  <MenuItem key={d.id} value={d.id}>
+                    {d.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid size={6}>
+            <FormControl fullWidth required>
+              <InputLabel id="reports-to-label">Reports To</InputLabel>
+              <Select
+                labelId="reports-to-label"
+                name="reportsToId"
+                value={form.reportsToId ?? ""}
+                onChange={handleChange}
+                input={<OutlinedInput label="Reports To" />}
+              >
+                {reportsTo.map((r: any) => (
+                  <MenuItem key={r.id} value={r.id}>
+                    {r.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
       </DialogContent>
 
       <DialogActions>

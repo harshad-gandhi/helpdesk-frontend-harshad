@@ -1,5 +1,6 @@
 import type { InviteAgentRequest } from "../interfaces";
 import type { ApiResponse } from "../interfaces/api-response";
+import type UpdateAgentRequest from "../interfaces/update-agent-request";
 import { getToken } from "./auth-service";
 
 const BASE_URL = "http://localhost:5093/api";
@@ -76,6 +77,29 @@ export async function inviteAgent(payload: InviteAgentRequest) {
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(payload),
+  });
+  return handleResponse(response);
+}
+export async function updateAgent(payload: UpdateAgentRequest) {
+  const token = getToken();
+  const response = await fetch(`${BASE_URL}/agents/update-agent`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(response);
+}
+export async function deleteAgent(id: number) {
+  const token = getToken();
+  const response = await fetch(`${BASE_URL}/agents/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
   });
   return handleResponse(response);
 }

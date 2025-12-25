@@ -11,4 +11,4 @@ export * from "./add-agent-dialog-props";
 export * from "./departments-get";
 export * from "./reports-to-dropdown";
 export * from "./invite-agent-request";
-
+export * from "./update-agent-request";
