@@ -8,7 +8,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
-import type { Column } from "../interfaces/Column";
+import type { Column } from "../../interfaces";
 
 interface TableProps<T> {
   columns: Column<T>[];

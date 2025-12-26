@@ -36,7 +36,7 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
-import type { Column } from "../../core/components/interfaces";
+import type { Column } from "../../core/interfaces";
 import StickyHeadTable from "../../core/components/StickyHeadTable";
 import EditIcon from "@mui/icons-material/Edit";
 import AddAgentDialog from "./AddAgentDialog";
