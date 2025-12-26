@@ -8,7 +8,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
-import type { Column } from "../interfaces/Column";
+import type { Column } from "../../interfaces";
 
 interface TableProps<T> {
   columns: Column<T>[];
@@ -60,12 +60,11 @@ export default function StickyHeadTable<T extends { [key: string]: any }>({
               .map((row, rowIndex) => (
                 <TableRow hover role="checkbox" tabIndex={-1} key={rowIndex}>
                   {columns.map((column) => {
-                    const value = row[column.id];
                     return (
                       <TableCell key={String(column.id)} align={column.align}>
-                        {column.format && typeof value === "number"
-                          ? column.format(value)
-                          : value}
+                        {column.render
+                          ? column.render(row)
+                          : row[column.id as keyof T]}
                       </TableCell>
                     );
                   })}
