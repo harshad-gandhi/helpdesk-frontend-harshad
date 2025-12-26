@@ -1,15 +1,25 @@
-import { useEffect, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type SyntheticEvent,
+} from "react";
+import {
+  deleteAgent,
   getAllAgents,
+  getAllDepartments,
   getAllPendingAgents,
 } from "../../services/agent-service";
 import "./Agents.scss";
 import type {
   Agent,
+  AgentActionsProps,
   AgentPendingInvitations,
   AgentsGet,
+  DepartmentsGet,
   Invitations_Agent,
-  TabPanelProps,
 } from "../../interfaces";
 import {
   Box,
@@ -21,27 +31,17 @@ import {
   OutlinedInput,
   Tab,
   Tabs,
+  Tooltip,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
-import type { Column } from "../../core/components/interfaces";
+import type { Column } from "../../core/interfaces";
 import StickyHeadTable from "../../core/components/StickyHeadTable";
-
-function CustomTabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
+import EditIcon from "@mui/icons-material/Edit";
+import AddAgentDialog from "./AddAgentDialog";
+import EditAgentDialog from "./EditAgentDialog";
+import { getToken } from "../../services/auth-service";
 
 function a11yProps(index: number) {
   return {
@@ -52,26 +52,148 @@ function a11yProps(index: number) {
 
 export default function Agents() {
   const [agents, setAgents] = useState<AgentsGet[]>([]);
+  const [departments, setDepartments] = useState<DepartmentsGet[]>([]);
+  const [isAddAgentOpen, setIsAddAgentOpen] = useState(false);
+
+  const [isEditAgentOpen, setIsEditAgentOpen] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+
+  const [roles, setRoles] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [reportsTo, setReportsTo] = useState<any[]>([]);
+
   const [invitedAgents, setInvitedAgents] = useState<AgentPendingInvitations[]>(
     []
   );
 
   const [value, setValue] = useState(0);
 
-  const handleChange = async (
-    _event: React.SyntheticEvent,
-    newValue: number
-  ) => {
+  const handleChange = async (_event: SyntheticEvent, newValue: number) => {
     setValue(newValue);
   };
 
-  const columns: Column<Agent>[] = [
-    { id: "fullName", label: "Name", minWidth: 200 },
-    { id: "projects", label: "Project", minWidth: 150 },
-    { id: "phoneNumber", label: "Phone", minWidth: 150 },
-    { id: "reportsTo", label: "Report To", minWidth: 150 },
-    { id: "departmentName", label: "Department", minWidth: 150 },
-  ];
+  const [searchText, setSearchText] = useState("");
+
+  const handleDeleteAgent = useCallback(async (agent: Agent) => {
+    console.log(agent);
+
+    await deleteAgent(agent.userId);
+  }, []);
+
+  const handleEditAgent = useCallback(async (agent: Agent) => {
+    try {
+      // Fetch agent details
+      console.log(agent);
+      const token = getToken();
+
+      const agentDetails = await fetch(`http://localhost:5093/api/agents/5`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }).then((res) => res.json());
+
+      // Parallel API calls
+      const [rolesRes, projectsRes, departmentsRes, reportsToRes] =
+        await Promise.all([
+          fetch("http://localhost:5093/api/agents/roles", {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }).then((r) => r.json()),
+          fetch("http://localhost:5093/api/projects", {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }).then((r) => r.json()),
+          fetch("http://localhost:5093/api/agents/departments", {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }).then((r) => r.json()),
+          fetch(
+            "http://localhost:5093/api/agents/reports-to?roleId=3&agentUserId=5&departmentId=10",
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          ).then((r) => r.json()),
+        ]);
+
+      setSelectedAgent(agentDetails.data);
+      setRoles(rolesRes.data);
+      setProjects(projectsRes.data);
+      setDepartments(departmentsRes.data);
+      setReportsTo(reportsToRes.data);
+
+      setIsEditAgentOpen(true);
+    } catch (error) {
+      console.error("Failed to load edit agent data", error);
+    }
+  }, []);
+
+  const handleAddAgent = useCallback(async () => {
+    const data: DepartmentsGet[] = await getAllDepartments<DepartmentsGet[]>();
+    setDepartments(data);
+    setIsAddAgentOpen(true);
+  }, []);
+
+  const handleSubmitAddAgent = async (data: {
+    email: string;
+    department: string;
+    reportsTo: string;
+  }) => {
+    console.log("Submitting agent:", data);
+    setIsAddAgentOpen(false);
+    setAgents(await getAllAgents<AgentsGet[]>(true));
+  };
+
+  const AgentActions = ({ agent, onEdit, onDelete }: AgentActionsProps) => (
+    <>
+      <Tooltip title="Edit Agent">
+        <IconButton size="small" color="primary" onClick={() => onEdit(agent)}>
+          <EditIcon />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="Delete Agent">
+        <IconButton
+          size="small"
+          color="success"
+          onClick={() => onDelete(agent)}
+        >
+          <DeleteIcon />
+        </IconButton>
+      </Tooltip>
+    </>
+  );
+  const columns = useMemo<Column<Agent>[]>(
+    () => [
+      { id: "fullName", label: "Name", minWidth: 200 },
+      { id: "projects", label: "Project", minWidth: 150 },
+      { id: "phoneNumber", label: "Phone", minWidth: 150 },
+      { id: "reportsTo", label: "Report To", minWidth: 150 },
+      { id: "departmentName", label: "Department", minWidth: 150 },
+      {
+        id: "actions",
+        label: "Actions",
+        minWidth: 120,
+        align: "center",
+        render: (row) => (
+          <AgentActions
+            agent={row}
+            onEdit={handleEditAgent}
+            onDelete={handleDeleteAgent}
+          />
+        ),
+      },
+    ],
+    [handleEditAgent, handleDeleteAgent]
+  );
   const invitations_columns: Column<Invitations_Agent>[] = [
     { id: "invitedEmail", label: "Name", minWidth: 200 },
     { id: "reportsTo", label: "Report To", minWidth: 150 },
@@ -87,14 +209,13 @@ export default function Agents() {
     const loadAgents: () => Promise<void> = async () => {
       try {
         if (value == 0) {
-          const data = await getAllAgents<AgentsGet[]>(true);
-          setAgents(data);
+          setAgents(await getAllAgents<AgentsGet[]>(true));
         } else if (value == 1) {
-          const data = await getAllAgents<AgentsGet[]>(false);
-          setAgents(data);
+          setAgents(await getAllAgents<AgentsGet[]>(false));
         } else {
-          const data = await getAllPendingAgents<AgentPendingInvitations[]>();
-          setInvitedAgents(data);
+          setInvitedAgents(
+            await getAllPendingAgents<AgentPendingInvitations[]>()
+          );
         }
       } catch (error) {
         console.error(error);
@@ -102,6 +223,21 @@ export default function Agents() {
     };
     loadAgents();
   }, [value]);
+
+  const filteredRows = useMemo(() => {
+    if (!searchText.trim()) return rows;
+
+    const search = searchText.toLowerCase();
+
+    return rows.filter((agent: any) => {
+      return (
+        agent.fullName?.toLowerCase().includes(search) ||
+        agent.departmentName?.toLowerCase().includes(search) ||
+        agent.reportsTo?.toLowerCase().includes(search) ||
+        agent.projects?.toLowerCase().includes(search)
+      );
+    });
+  }, [rows, searchText]);
   return (
     <>
       <div className="agents-container h-100 p-2 p-lg-3">
@@ -112,24 +248,33 @@ export default function Agents() {
             <p className="page-subtitle m-0">Manage agents for all projects</p>
           </div>
           <div className="header-actions d-flex align-items-center gap-3">
-            <Button variant="contained" startIcon={<AddIcon />}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => {
+                handleAddAgent();
+              }}
+            >
               Add Agent
             </Button>
           </div>
         </div>
         <div className="search-tabs-section d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 gap-md-4 mb-4">
-          <FormControl sx={{ m: 1, width: "25ch" }} variant="outlined">
+          <FormControl sx={{ m: 1, width: "50ch" }} variant="outlined">
             <InputLabel htmlFor="outlined-adornment-password">
-              Password
+              Search
             </InputLabel>
             <OutlinedInput
-              id="outlined-adornment-password"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
               endAdornment={
                 <InputAdornment position="end">
-                  <IconButton edge="end">{<SearchIcon />}</IconButton>
+                  <IconButton edge="end">
+                    <SearchIcon />
+                  </IconButton>
                 </InputAdornment>
               }
-              label="Password"
+              label="Search"
             />
           </FormControl>
 
@@ -144,13 +289,10 @@ export default function Agents() {
               <Tab label="Pending" {...a11yProps(2)} />
             </Tabs>
           </Box>
-          <CustomTabPanel value={value} index={0}></CustomTabPanel>
-          <CustomTabPanel value={value} index={1}></CustomTabPanel>
-          <CustomTabPanel value={value} index={2}></CustomTabPanel>
-        </div>{" "}
+        </div>
         <div className="table-container">
           {value === 0 || value === 1 ? (
-            <StickyHeadTable columns={columns} rows={rows} />
+            <StickyHeadTable columns={columns} rows={filteredRows} />
           ) : (
             <StickyHeadTable
               columns={invitations_columns}
@@ -159,6 +301,29 @@ export default function Agents() {
           )}
         </div>
       </div>
+      <div className="add customer">
+        {isAddAgentOpen && (
+          <AddAgentDialog
+            open={isAddAgentOpen}
+            departments={departments}
+            onClose={() => setIsAddAgentOpen(false)}
+            onSubmit={handleSubmitAddAgent}
+          />
+        )}
+      </div>
+      <EditAgentDialog
+        open={isEditAgentOpen}
+        agent={selectedAgent}
+        roles={roles}
+        projects={projects}
+        departments={departments}
+        reportsTo={reportsTo}
+        onClose={() => setIsEditAgentOpen(false)}
+        onSubmit={(data: any) => {
+          console.log("Updated Agent:", data);
+          setIsEditAgentOpen(false);
+        }}
+      />
     </>
   );
 }

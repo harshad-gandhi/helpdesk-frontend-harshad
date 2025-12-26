@@ -2,8 +2,9 @@ import { jwtDecode } from "jwt-decode";
 import type { ApiResponse } from "../interfaces/api-response";
 import type { LoginRequest } from "../interfaces/login-request";
 import type { LoginResponse } from "../interfaces/login-response";
+import { API_BASE_URL } from "../api";
 
-const BASE_URL = "http://localhost:5093/api/auth";
+const AUTH_URL = `${API_BASE_URL}/auth`;
 
 async function handleResponse<T>(response: Response): Promise<T> {
   const responseJson: ApiResponse<T> = await response.json();
@@ -17,10 +18,8 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return responseJson.data;
 }
 
-export async function login(
-  payload: LoginRequest
-): Promise<LoginResponse> {
-  const response = await fetch(`${BASE_URL}/login`, {
+export async function login(payload: LoginRequest): Promise<LoginResponse> {
+  const response = await fetch(`${AUTH_URL}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -30,7 +29,7 @@ export async function login(
 }
 
 export async function refreshToken(): Promise<string> {
-  const response = await fetch(`${BASE_URL}/refresh`, {
+  const response = await fetch(`${AUTH_URL}/refresh`, {
     method: "POST",
     credentials: "include",
   });
@@ -39,7 +38,7 @@ export async function refreshToken(): Promise<string> {
 }
 
 export async function getCurrentUser<T>() {
-  const response = await fetch(`${BASE_URL}/me`, {
+  const response = await fetch(`${AUTH_URL}/me`, {
     headers: {
       Authorization: `Bearer ${getToken()}`,
     },
@@ -47,7 +46,6 @@ export async function getCurrentUser<T>() {
 
   return handleResponse<T>(response);
 }
-
 
 export function getToken(): string | null {
   return localStorage.getItem("authToken");
@@ -72,7 +70,6 @@ export function isTokenExpired(): boolean {
 export function isAuthenticated(): boolean {
   return !!getToken() && !isTokenExpired();
 }
-
 
 export function logout(): void {
   clearToken();
