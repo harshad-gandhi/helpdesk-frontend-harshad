@@ -56,7 +56,7 @@ export default function Login() {
         <Box className="auth-image-section d-flex justify-content-center align-items-center">
           <img
             className="main-illustration"
-            src="/src/assets/images/auth-left-side-img.jpg"
+            src="/images/auth-left-side-img.jpg"
             alt="Login Illustration"
           />
         </Box>
